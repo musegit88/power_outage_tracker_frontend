@@ -1,4 +1,10 @@
-import { Sidebar, SidebarHeader } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const AppSidebar = () => {
   return (
@@ -6,6 +12,12 @@ const AppSidebar = () => {
       <SidebarHeader>
         <h1>Sidebar</h1>
       </SidebarHeader>
+      <SidebarContent>
+        <div>Sidebar Content</div>
+      </SidebarContent>
+      <SidebarFooter>
+        <ModeToggle />
+      </SidebarFooter>
     </Sidebar>
   );
 };
