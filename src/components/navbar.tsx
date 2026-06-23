@@ -1,16 +1,25 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { LogOut, Menu, Zap } from "lucide-react";
 
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { navLinks } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Navbar = () => {
+  const router = useRouter();
   const location = useLocation();
+
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    router.navigate({ to: "/signin", search: { redirect: location.pathname } });
+  };
   return (
     <nav className="w-full top-0 z-50 backdrop-blur-sm p-4 border-b">
       <div className="flex items-center justify-between">
@@ -39,11 +48,20 @@ const Navbar = () => {
               {navLink.title}
             </Link>
           ))}
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={handleLogout}>
             <LogOut />
+            <span className="sr-only">Logout</span>
           </Button>
-          <Avatar>
-            <AvatarFallback>CN</AvatarFallback>
+          <Avatar className="overflow-visible" title={user?.name}>
+            <AvatarFallback>
+              {user?.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+            <AvatarBadge
+              className={cn(
+                user?.role === "ADMIN" && "bg-yellow-500",
+                user?.role === "SUPER_ADMIN" && "bg-green-500",
+              )}
+            />
           </Avatar>
         </div>
 
@@ -75,6 +93,7 @@ const Navbar = () => {
                     variant="outline"
                     size="icon"
                     className="flex gap-2 rounded-md w-full"
+                    onClick={handleLogout}
                   >
                     <LogOut />
                     <span>Logout</span>
