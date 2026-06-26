@@ -21,7 +21,7 @@ const Navbar = () => {
     router.navigate({ to: "/signin", search: { redirect: location.pathname } });
   };
   return (
-    <nav className="w-full top-0 z-50 backdrop-blur-sm p-4 border-b">
+    <nav className="w-full top-0 z-50 bg-white/80 dark:bg-slate-900/95 backdrop-blur-sm p-4 border-b">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SidebarTrigger />
@@ -68,7 +68,7 @@ const Navbar = () => {
         {/* Mobile navbar */}
         <div className="sm:hidden flex flex-row-reverse items-center gap-2">
           <Sheet>
-            <SheetTrigger>
+            <SheetTrigger asChild>
               <Button variant="outline" size="icon">
                 <Menu />
               </Button>
@@ -102,8 +102,16 @@ const Navbar = () => {
               </div>
             </SheetContent>
           </Sheet>
-          <Avatar>
-            <AvatarFallback>CN</AvatarFallback>
+          <Avatar className="overflow-visible" title={user?.name}>
+            <AvatarFallback>
+              {user?.name?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+            <AvatarBadge
+              className={cn(
+                user?.role === "ADMIN" && "bg-yellow-500",
+                user?.role === "SUPER_ADMIN" && "bg-green-500",
+              )}
+            />
           </Avatar>
         </div>
       </div>
