@@ -1,5 +1,11 @@
+import Map from "./maps/map";
+
 const LiveMap = () => {
-  return <div>LiveMap</div>;
+  return (
+    <div className="w-full h-screen">
+      <Map />
+    </div>
+  );
 };
 
 export default LiveMap;
