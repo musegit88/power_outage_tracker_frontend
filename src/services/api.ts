@@ -77,7 +77,6 @@ class ApiServices {
       body: JSON.stringify({ name, email, phoneNumber, password, consents }),
     });
     const { token, refreshToken, user } = data.response;
-    console.log(data);
 
     // Store tokens
     tokenService.setAccessToken(token);
@@ -95,7 +94,6 @@ class ApiServices {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    console.log(data);
     const { token, refreshToken, user } = data.response;
 
     // Store tokens
@@ -168,7 +166,6 @@ class ApiServices {
   }
 
   async addConfirmation(outageId: string, userId: string) {
-    console.log(outageId);
     return this.request(`/outages/${outageId}/confirm`, {
       method: "POST",
       body: JSON.stringify({ userId }),
