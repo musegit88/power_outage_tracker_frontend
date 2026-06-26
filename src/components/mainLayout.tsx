@@ -3,18 +3,21 @@ import { Outlet } from "@tanstack/react-router";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/app-sidebar";
 import Navbar from "@/components/navbar";
+import { LocationProvider } from "@/providers/locationProvider";
 
 const MainLayout = () => {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <Navbar />
-        <div>
-          <Outlet />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <LocationProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <Navbar />
+          <main>
+            <Outlet />
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </LocationProvider>
   );
 };
 
