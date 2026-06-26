@@ -10,3 +10,26 @@ export const navLinks = [
     pathname: "/report",
   },
 ];
+
+export const reportFormNavigation = [
+  {
+    id: 1,
+    title: "Location",
+    hash: "location",
+  },
+  {
+    id: 2,
+    title: "Details",
+    hash: "details",
+  },
+  {
+    id: 3,
+    title: "Additional Context",
+    hash: "context",
+  },
+  {
+    id: 4,
+    title: "Severity",
+    hash: "severity",
+  },
+];
