@@ -7,17 +7,19 @@ import { LocationProvider } from "@/providers/locationProvider";
 
 const MainLayout = () => {
   return (
-    <LocationProvider>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <Navbar />
-          <main>
-            <Outlet />
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
-    </LocationProvider>
+    <div className="h-screen">
+      <LocationProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <Navbar />
+            <main className="w-full h-full">
+              <Outlet />
+            </main>
+          </SidebarInset>
+        </SidebarProvider>
+      </LocationProvider>
+    </div>
   );
 };
 
