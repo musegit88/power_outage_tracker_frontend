@@ -6,13 +6,14 @@ import { cn } from "@/lib/utils";
 import { navLinks } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Navbar = () => {
   const router = useRouter();
   const location = useLocation();
+  const { open, isMobile } = useSidebar();
 
   const { logout, user } = useAuth();
 
@@ -26,14 +27,26 @@ const Navbar = () => {
         <div className="flex items-center gap-2">
           <SidebarTrigger />
           <Separator orientation="vertical" className="mr-2" />
-          <div className="flex items-center">
-            <Link to="/live-map" className="flex items-center gap-2">
-              <Zap />
-              <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                PowerSignal
-              </span>
-            </Link>
-          </div>
+          {!open && (
+            <div className="flex items-center">
+              <Link to="/live-map" className="flex items-center gap-2">
+                <Zap />
+                <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
+                  PowerSignal
+                </span>
+              </Link>
+            </div>
+          )}
+          {isMobile && (
+            <div className="flex items-center">
+              <Link to="/live-map" className="flex items-center gap-2">
+                <Zap />
+                <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
+                  PowerSignal
+                </span>
+              </Link>
+            </div>
+          )}
         </div>
         <div className="hidden sm:flex items-center gap-4">
           {navLinks.map((navLink) => (
@@ -73,7 +86,7 @@ const Navbar = () => {
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="dark:bg-slate-900">
               <div className="flex flex-col gap-4 p-4 mt-10 h-full">
                 {navLinks.map((navLink) => (
                   <Link
