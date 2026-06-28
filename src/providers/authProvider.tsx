@@ -1,7 +1,8 @@
-import api, { type User } from "@/services/api";
-import tokenService from "@/services/tokenService";
 import { useEffect, useState, type ReactNode } from "react";
+import api from "@/services/api";
+import tokenService from "@/services/tokenService";
 import { AuthContext } from "@/contexts/authContext";
+import type { User } from "@/types";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
