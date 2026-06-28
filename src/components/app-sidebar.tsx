@@ -1,21 +1,144 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { Info, ListFilter, Zap } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { filters } from "@/lib/constants";
+import { useMapLoadingState } from "@/hooks/useMapLoadingState";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+
+const MarqueeStatItem = ({ children }: { children: React.ReactNode }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const inner = innerRef.current;
+    if (!container || !inner) return;
+
+    const check = () => {
+      setIsOverflowing(inner.scrollWidth > container.clientWidth);
+    };
+
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(container);
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="h-9 px-3 inline-flex shrink-0 items-center justify-center rounded-md border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none border-border w-full overflow-hidden"
+    >
+      <div
+        ref={innerRef}
+        className={cn(
+          "flex gap-8 whitespace-nowrap px-4",
+          isOverflowing ? "animate-marquee" : "",
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const AppSidebar = () => {
+  const { pathname } = useLocation();
+  const { open } = useSidebar();
+  const { isMapLoading } = useMapLoadingState();
+
   return (
     <Sidebar>
-      <SidebarHeader>
-        <h1>Sidebar</h1>
+      <SidebarHeader className="dark:bg-slate-900 p-4">
+        {open && (
+          <div className="flex items-center mt-1">
+            <Link to="/live-map" className="flex items-center gap-2">
+              <Zap />
+              <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
+                PowerSignal
+              </span>
+            </Link>
+          </div>
+        )}
       </SidebarHeader>
-      <SidebarContent>
-        <div>Sidebar Content</div>
+      <SidebarContent className="dark:bg-slate-900">
+        {pathname === "/live-map" && (
+          <SidebarGroup>
+            <div className="flex justify-center items-center gap-2 w-full mb-2">
+              <ListFilter className="text-muted-foreground" />
+              <h1 className="text-md text-center text-muted-foreground font-semibold">
+                Filters
+              </h1>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                disabled={isMapLoading}
+                className="rounded-md hover:border-blue-500text-blue-500"
+                variant="outline"
+              >
+                All
+              </Button>
+              {filters.map((filter) => (
+                <Button
+                  disabled={isMapLoading}
+                  key={filter.id}
+                  className={cn(
+                    "rounded-md",
+                    filter.title === "Active"
+                      ? "hover:border-red-500"
+                      : filter.title === "Investigating"
+                        ? "hover:border-yellow-500"
+                        : "hover:border-green-500",
+                    filter.title === "Active"
+                      ? "text-red-500"
+                      : filter.title === "Investigating"
+                        ? "text-yellow-500"
+                        : "text-green-500",
+                    filter.value === "ACTIVE" && "border-red-500",
+                    filter.value === "INVESTIGATING" && "border-yellow-500",
+                    filter.value === "RESOLVED" && "border-green-500",
+                  )}
+                  variant="outline"
+                >
+                  {filter.title}
+                </Button>
+              ))}
+            </div>
+          </SidebarGroup>
+        )}
+        <SidebarGroup>
+          <div className="flex justify-center items-center gap-2 w-full mb-2">
+            <Info className="text-muted-foreground" />
+            <h1 className="text-md text-center text-muted-foreground font-semibold">
+              Stats
+            </h1>
+          </div>
+          <div className="flex flex-col gap-2">
+            <MarqueeStatItem>
+              <span>Active outages</span>
+            </MarqueeStatItem>
+            <MarqueeStatItem>
+              <span>Resolved outages today</span>
+            </MarqueeStatItem>
+          </div>
+        </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="dark:bg-slate-900">
+        <Separator className="mt-2 mb-2" />
         <ModeToggle />
       </SidebarFooter>
     </Sidebar>
