@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Loader2 } from "lucide-react";
 
 import { useTheme } from "../theme-provider";
 import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMapLoadingState } from "@/hooks/useMapLoadingState";
 
 const Map = () => {
   const { theme } = useTheme();
@@ -13,7 +14,7 @@ const Map = () => {
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  const [isMapLoading, setIsMapLoading] = useState(false);
+  const { isMapLoading, setIsMapLoading } = useMapLoadingState();
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -71,7 +72,7 @@ const Map = () => {
     return () => {
       mapRef.current?.remove();
     };
-  }, [theme, positions]);
+  }, [theme, positions, setIsMapLoading]);
   return (
     <>
       <div ref={mapContainerRef} className="relative w-full h-full" />
