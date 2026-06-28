@@ -33,3 +33,30 @@ export const reportFormNavigation = [
     hash: "severity",
   },
 ];
+
+export const OutageStatus = {
+  ACTIVE: "ACTIVE",
+  RESOLVED: "RESOLVED",
+  INVESTIGATING: "INVESTIGATING",
+};
+
+export const filters = [
+  {
+    id: 1,
+    title: "Active",
+    value: OutageStatus.ACTIVE,
+    borderColor: "border-red-500",
+  },
+  {
+    id: 2,
+    title: "Investigating",
+    value: OutageStatus.INVESTIGATING,
+    borderColor: "border-yellow-500",
+  },
+  {
+    id: 3,
+    title: "Resolved",
+    value: OutageStatus.RESOLVED,
+    borderColor: "border-green-500",
+  },
+];
