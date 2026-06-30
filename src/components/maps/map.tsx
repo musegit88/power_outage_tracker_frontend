@@ -15,7 +15,6 @@ const DEFAULT_CENTER: [number, number] = [38.766, 8.944];
 const Map = () => {
   const { theme } = useTheme();
   const { positions, isOutOfBounds, setPositions } = useUserLocation();
-  console.log(positions);
 
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
