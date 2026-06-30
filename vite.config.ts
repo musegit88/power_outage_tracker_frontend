@@ -23,11 +23,16 @@ export default defineConfig({
     },
   },
   server: {
-    https: process.env.NODE_ENV === "development" && {
-      key: fs.readFileSync(
-        path.resolve(__dirname, "./certs/localhost-key.pem"),
-      ),
-      cert: fs.readFileSync(path.resolve(__dirname, "./certs/localhost.pem")),
-    },
+    https:
+      process.env.NODE_ENV === "development"
+        ? {
+            key: fs.readFileSync(
+              path.resolve(__dirname, "./certs/localhost-key.pem"),
+            ),
+            cert: fs.readFileSync(
+              path.resolve(__dirname, "./certs/localhost.pem"),
+            ),
+          }
+        : undefined,
   },
 });
