@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearch,
+} from "@tanstack/react-router";
 import { Info, ListFilter, Zap } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -58,8 +63,15 @@ const MarqueeStatItem = ({ children }: { children: React.ReactNode }) => {
 
 const AppSidebar = () => {
   const { pathname } = useLocation();
+  const navigate = useNavigate({ from: "/live-map" });
+  const search = useSearch({ strict: false });
+
   const { open } = useSidebar();
   const { isMapLoading } = useMapLoadingState();
+
+  const handleClick = (filter: "ACTIVE" | "INVESTIGATING" | "RESOLVED") => {
+    navigate({ search: (prev) => ({ ...prev, status: filter }) });
+  };
 
   return (
     <Sidebar>
@@ -87,7 +99,16 @@ const AppSidebar = () => {
             <div className="flex flex-col gap-2">
               <Button
                 disabled={isMapLoading}
-                className="rounded-md hover:border-blue-500text-blue-500"
+                onClick={() =>
+                  navigate({ search: (prev) => ({ ...prev, status: "ALL" }) })
+                }
+                className={cn(
+                  "rounded-md",
+                  "hover:border-blue-500 dark:hover:border-blue-500",
+                  "text-blue-500",
+                  search.status === "ALL" &&
+                    "border-blue-500 dark:border-blue-500",
+                )}
                 variant="outline"
               >
                 All
@@ -96,21 +117,32 @@ const AppSidebar = () => {
                 <Button
                   disabled={isMapLoading}
                   key={filter.id}
+                  onClick={() =>
+                    handleClick(
+                      filter.value as "ACTIVE" | "INVESTIGATING" | "RESOLVED",
+                    )
+                  }
                   className={cn(
                     "rounded-md",
                     filter.title === "Active"
-                      ? "hover:border-red-500"
+                      ? "hover:border-red-500 dark:hover:border-red-500"
                       : filter.title === "Investigating"
-                        ? "hover:border-yellow-500"
-                        : "hover:border-green-500",
+                        ? "hover:border-yellow-500 dark:hover:border-yellow-500"
+                        : "hover:border-green-500 dark:hover:border-green-500",
                     filter.title === "Active"
                       ? "text-red-500"
                       : filter.title === "Investigating"
                         ? "text-yellow-500"
                         : "text-green-500",
-                    filter.value === "ACTIVE" && "border-red-500",
-                    filter.value === "INVESTIGATING" && "border-yellow-500",
-                    filter.value === "RESOLVED" && "border-green-500",
+                    search.status === "ACTIVE" &&
+                      filter.value === "ACTIVE" &&
+                      "border-red-500 dark:border-red-500",
+                    search.status === "INVESTIGATING" &&
+                      filter.value === "INVESTIGATING" &&
+                      "border-yellow-500 dark:border-yellow-500",
+                    search.status === "RESOLVED" &&
+                      filter.value === "RESOLVED" &&
+                      "border-green-500 dark:border-green-500",
                   )}
                   variant="outline"
                 >
