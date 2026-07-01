@@ -18,6 +18,27 @@ export interface CreateOutage {
     | "OTHER";
 }
 
+export interface Outage {
+  id: string;
+  longitude: number;
+  latitude: number;
+  locationName: string;
+  description: string;
+  status: string;
+  severity: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  user: {
+    name: string;
+    email: string;
+  };
+  _count: {
+    confirmations: number;
+  };
+  affectedHomesEstimate?: number;
+}
+
 export interface User {
   id: string;
   email: string;
