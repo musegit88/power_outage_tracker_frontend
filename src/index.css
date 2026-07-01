@@ -172,3 +172,27 @@ body {
     transform: translateX(0);
   }
 }
+
+.mapboxgl-popup-content {
+  border-radius: 0.5rem !important;
+}
+
+.dark .mapboxgl-popup-content {
+  background: oklch(20.8% 0.042 265.755) !important;
+}
+
+.dark .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: oklch(20.8% 0.042 265.755) !important;
+}
+
+.dark .mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: oklch(20.8% 0.042 265.755) !important;
+}
+
+.dark .mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: oklch(20.8% 0.042 265.755) !important;
+}
+
+.dark .mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: oklch(20.8% 0.042 265.755) !important;
+}
