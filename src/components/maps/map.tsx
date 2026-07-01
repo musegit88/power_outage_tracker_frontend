@@ -3,16 +3,26 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Loader2, Locate, MapPin, TriangleAlert } from "lucide-react";
 
+import type { Outage } from "@/types";
+import api from "@/services/api";
 import { useTheme } from "../theme-provider";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { useMapLoadingState } from "@/hooks/useMapLoadingState";
 import { Button } from "@/components/ui/button";
+import Marker from "@/components/marker";
+import Popup from "@/components/popup";
 import { toast } from "sonner";
 
 // Default center of the supported service area
 const DEFAULT_CENTER: [number, number] = [38.766, 8.944];
 
-const Map = () => {
+interface MapProps {
+  limit?: number;
+  offset?: number;
+  status: string;
+}
+
+const Map = ({ limit, offset, status }: MapProps) => {
   const { theme } = useTheme();
   const { positions, isOutOfBounds, setPositions } = useUserLocation();
 
@@ -22,12 +32,17 @@ const Map = () => {
 
   const { isMapLoading, setIsMapLoading } = useMapLoadingState();
   const [makeDraggable, setMakeDraggable] = useState(false);
+  const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+  const [outages, setOutages] = useState<Outage[]>([]);
+  const [activeMarker, setActiveMarker] = useState<Outage>();
 
+  // Handle Use default location button
   const handleUseDefaultLocation = () => {
     setPositions({ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] });
     setMakeDraggable(false);
   };
 
+  // Handle Update location button
   const handleUpdateLocation = () => {
     setMakeDraggable(true);
   };
@@ -44,6 +59,7 @@ const Map = () => {
           ? "mapbox://styles/mapbox/dark-v11"
           : "mapbox://styles/mapbox/streets-v12",
     });
+    setMapInstance(mapRef.current);
 
     // Adding map controls but not the zoom button
     mapRef.current.addControl(
@@ -103,6 +119,22 @@ const Map = () => {
         toast.success("Location updated successfully");
       }
     });
+
+    //____________ close popup when clicking on map, during dragstart, during load, and during resize _________________
+    mapRef.current.on("click", () => {
+      setActiveMarker(undefined);
+    });
+    mapRef.current.on("dragstart", () => {
+      setActiveMarker(undefined);
+    });
+    mapRef.current.on("load", () => {
+      setActiveMarker(undefined);
+    });
+    mapRef.current.on("resize", () => {
+      setActiveMarker(undefined);
+    });
+    // ___________________________________________
+
     // Cleaning up the map
     return () => {
       mapRef.current?.remove();
@@ -116,6 +148,17 @@ const Map = () => {
     setPositions,
   ]);
 
+  useEffect(() => {
+    const getAllOutages = async () => {
+      const response = await api.getAllOutages(limit!, offset!, status);
+      setOutages(response.outages);
+    };
+    getAllOutages();
+  }, [limit, offset, status]);
+
+  const handleMarkerClick = (outage: Outage) => {
+    setActiveMarker(outage);
+  };
   return (
     <>
       <div ref={mapContainerRef} className="relative w-full h-full" />
@@ -164,6 +207,19 @@ const Map = () => {
           </div>
         </div>
       )}
+      {!isMapLoading &&
+        mapInstance &&
+        outages &&
+        outages.map((outage) => (
+          <Marker
+            key={outage.id}
+            data={outage}
+            map={mapInstance}
+            isActive={activeMarker?.id === outage.id}
+            onClick={handleMarkerClick}
+          />
+        ))}
+      {mapInstance && <Popup activeMarker={activeMarker} map={mapInstance} />}
     </>
   );
 };
