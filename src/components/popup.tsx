@@ -5,7 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { Copy, CopyCheck, Lightbulb, LightbulbOff } from "lucide-react";
+import { Copy, CopyCheck, Lightbulb, LightbulbOff, Users } from "lucide-react";
 
 import api from "@/services/api";
 import type { Outage } from "@/types";
@@ -221,13 +221,24 @@ const Popup = ({
           ) : (
             <></>
           )}
-          <div>
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm text-gray-500">
               {activeMarker?._count?.confirmations ?? 0} confirmation
               {activeMarker?._count?.confirmations !== 0 &&
                 activeMarker?._count?.confirmations !== 1 &&
                 "s"}
             </p>
+          </div>
+          <div>
+            {activeMarker?.affectedHomesEstimated ? (
+              <p className="text-sm text-muted-foreground wrap-break-word">
+                Power outage affecting {activeMarker?.affectedHomesEstimated}{" "}
+                home{activeMarker?.affectedHomesEstimated !== 1 && "s"}
+              </p>
+            ) : (
+              <></>
+            )}
           </div>
           {user?.id !== activeMarker?.userId && (
             <>
