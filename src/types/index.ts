@@ -28,6 +28,7 @@ export interface Outage {
   severity: string;
   createdAt: Date;
   updatedAt: Date;
+  resolvedAt?: Date;
   userId: string;
   user: {
     name: string;
@@ -36,7 +37,7 @@ export interface Outage {
   _count: {
     confirmations: number;
   };
-  affectedHomesEstimate?: number;
+  affectedHomesEstimated?: number;
 }
 
 export interface User {
