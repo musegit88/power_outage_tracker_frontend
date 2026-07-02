@@ -26,7 +26,7 @@ function App() {
   const auth = useAuth();
 
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="dark">
       <TooltipProvider>
         <Toaster position="top-right" richColors closeButton />
         <RouterProvider router={router} context={{ auth }} />
