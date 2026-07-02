@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Loader2, Locate, MapPin, TriangleAlert } from "lucide-react";
 
+import socketService from "@/services/socketService";
 import type { Outage } from "@/types";
 import api from "@/services/api";
 import { useTheme } from "../theme-provider";
@@ -148,6 +149,10 @@ const Map = ({ limit, offset, status }: MapProps) => {
     setPositions,
   ]);
 
+  const handleMarkerClick = (outage: Outage) => {
+    setActiveMarker(outage);
+  };
+
   useEffect(() => {
     const getAllOutages = async () => {
       const response = await api.getAllOutages(limit!, offset!, status);
@@ -156,9 +161,61 @@ const Map = ({ limit, offset, status }: MapProps) => {
     getAllOutages();
   }, [limit, offset, status]);
 
-  const handleMarkerClick = (outage: Outage) => {
-    setActiveMarker(outage);
-  };
+  // handle new or updated outage
+  const handleOutage = useCallback((outage: Outage) => {
+    setOutages((prev) => {
+      const exists = prev.some((o) => o.id === outage.id);
+      if (exists) {
+        setActiveMarker(outage);
+        return prev.map((o) => (o.id === outage.id ? outage : o));
+      }
+      return [...prev, outage];
+    });
+  }, []);
+
+  // handle outage status change
+  const handleStatusChange = useCallback(
+    (data: { outage: Outage }) => {
+      console.log("Outage status changed event:", data);
+      if (data.outage) {
+        handleOutage(data.outage);
+      }
+    },
+    [handleOutage],
+  );
+
+  // handle outage confirmation
+  const handleConfirmation = useCallback(
+    (data: { outage: Outage }) => {
+      console.log("Confirmation received in LiveMap:", data);
+      const { outage } = data;
+      setOutages((prev) =>
+        prev.map((o) =>
+          o.id === outage.id ? { ...o, _count: outage._count } : o,
+        ),
+      );
+
+      // Also update activeMarker if it's the one being confirmed
+      setActiveMarker((prev) => {
+        if (prev?.id === outage.id) {
+          return { ...prev, _count: outage._count };
+        }
+        return prev;
+      });
+    },
+    [setActiveMarker],
+  );
+
+  useEffect(() => {
+    socketService.onNewOutage(handleOutage);
+    socketService.onOutageStatusChanged(handleStatusChange);
+    socketService.onOutageConfirmed(handleConfirmation);
+    return () => {
+      socketService.off("outage:new", handleOutage);
+      socketService.off("outage:status_change", handleStatusChange);
+      socketService.off("outage:confirmed", handleConfirmation);
+    };
+  }, [handleOutage, handleStatusChange, handleConfirmation]);
   return (
     <>
       <div ref={mapContainerRef} className="relative w-full h-full" />

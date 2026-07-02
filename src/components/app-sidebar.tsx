@@ -10,6 +10,8 @@ import { Info, ListFilter, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { filters } from "@/lib/constants";
 import { useMapLoadingState } from "@/hooks/useMapLoadingState";
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { useRealTimeOutages } from "@/hooks/useRealTimeOutage";
 import {
   Sidebar,
   SidebarContent,
@@ -69,6 +71,15 @@ const AppSidebar = () => {
   const { open } = useSidebar();
   const { isMapLoading } = useMapLoadingState();
 
+  const { positions } = useUserLocation();
+  const { connectionStatus, stats } = useRealTimeOutages({
+    userLocation: positions
+      ? { lat: positions.lat, lng: positions.lng }
+      : undefined,
+    enabled: !!positions,
+  });
+
+  // a function to update the filter part of the url
   const handleClick = (filter: "ACTIVE" | "INVESTIGATING" | "RESOLVED") => {
     navigate({ search: (prev) => ({ ...prev, status: filter }) });
   };
@@ -160,16 +171,55 @@ const AppSidebar = () => {
             </h1>
           </div>
           <div className="flex flex-col gap-2">
-            <MarqueeStatItem>
-              <span>Active outages</span>
-            </MarqueeStatItem>
-            <MarqueeStatItem>
-              <span>Resolved outages today</span>
-            </MarqueeStatItem>
+            {stats?.activeOutages !== 0 && (
+              <MarqueeStatItem>
+                <span>{stats?.activeOutages} Active outages</span>
+              </MarqueeStatItem>
+            )}
+            {stats?.resolvedToday !== 0 && (
+              <MarqueeStatItem>
+                <span>
+                  {stats?.resolvedToday}{" "}
+                  {stats?.resolvedToday && stats.resolvedToday > 1
+                    ? "Resolved outages today"
+                    : "Resolved outage today"}
+                </span>
+              </MarqueeStatItem>
+            )}
           </div>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="dark:bg-slate-900">
+        {stats?.onlineUsers && (
+          <div className="h-9 px-3 inline-flex shrink-0 items-center justify-center rounded-md border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none border-border w-full">
+            <p>
+              {stats?.onlineUsers}{" "}
+              {stats?.onlineUsers && stats.onlineUsers > 1
+                ? "users online"
+                : "user online"}
+            </p>
+          </div>
+        )}
+        <div
+          className={cn(
+            "h-9 px-3 inline-flex gap-1.5 shrink-0 items-center justify-center rounded-md border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none border-border w-full",
+            connectionStatus
+              ? "text-green-500 border-green-500"
+              : "text-red-500 border-red-500",
+          )}
+        >
+          <span
+            className={cn(
+              "w-2 h-2 rounded-full",
+              connectionStatus ? "bg-green-500" : "bg-red-500",
+            )}
+          />
+          <p>
+            {connectionStatus
+              ? "Connected to live updates"
+              : "Disconnected from live updates"}
+          </p>
+        </div>
         <Separator className="mt-2 mb-2" />
         <ModeToggle />
       </SidebarFooter>
