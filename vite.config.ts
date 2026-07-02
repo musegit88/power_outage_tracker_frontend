@@ -35,4 +35,15 @@ export default defineConfig({
           }
         : undefined,
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        minify: {
+          compress: {
+            dropConsole: true,
+          },
+        },
+      },
+    },
+  },
 });
