@@ -90,7 +90,8 @@ const AppSidebar = () => {
         {open && (
           <div className="flex items-center mt-1">
             <Link to="/live-map" className="flex items-center gap-2">
-              <Zap />
+              {/* <Zap /> */}
+              <img src="/pwa-192x192.png" alt="logo" className="w-8 h-8" />
               <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
                 PowerSignal
               </span>

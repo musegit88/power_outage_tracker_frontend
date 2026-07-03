@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /signin
+Disallow: /signup
+Disallow: /dashboard
+Disallow: /admin
+
+Sitemap: https://powersignal.netlify.app/sitemap.xml

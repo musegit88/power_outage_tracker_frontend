@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import fs from "fs";
 
@@ -16,6 +17,13 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    VitePWA({
+      includeAssets: ["favicon.svg", "apple-touch-icon.png", "mask-icon.svg"],
+      manifest: false,
+      devOptions: {
+        enabled: true,
+      },
+    }),
   ],
   resolve: {
     alias: {
