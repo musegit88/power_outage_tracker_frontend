@@ -5,7 +5,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { Info, ListFilter, Zap } from "lucide-react";
+import { Info, ListFilter } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { filters } from "@/lib/constants";

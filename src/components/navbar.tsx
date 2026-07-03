@@ -1,5 +1,5 @@
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { LogOut, Menu, Zap } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
