@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/web-manifest-combined.json",
-  "name": "powerwatch",
-  "short_name": "power",
+  "name": "PowerWatch",
+  "short_name": "PowerWatch",
   "icons": [
     {
       "src": "/pwa-192x192.png",

@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import Logo from "@/components/logo";
 
 const Navbar = () => {
   const router = useRouter();
@@ -29,24 +30,12 @@ const Navbar = () => {
           <Separator orientation="vertical" className="mr-2" />
           {!open && (
             <div className="flex items-center">
-              <Link to="/live-map" className="flex items-center gap-2">
-                {/* <Zap /> */}
-                <img src="/pwa-192x192.png" alt="logo" className="w-8 h-8" />
-                <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                  PowerSignal
-                </span>
-              </Link>
+              <Logo />
             </div>
           )}
           {isMobile && (
             <div className="flex items-center">
-              <Link to="/live-map" className="flex items-center gap-2">
-                {/* <Zap /> */}
-                <img src="/pwa-192x192.png" alt="logo" className="w-8 h-8" />
-                <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                  PowerSignal
-                </span>
-              </Link>
+              <Logo />
             </div>
           )}
         </div>

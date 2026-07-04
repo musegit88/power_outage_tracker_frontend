@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
+import { useLocation, useNavigate, useSearch } from "@tanstack/react-router";
 import { Info, ListFilter } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -23,6 +18,7 @@ import {
 import { ModeToggle } from "@/components/mode-toggle";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/logo";
 
 const MarqueeStatItem = ({ children }: { children: React.ReactNode }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -89,13 +85,7 @@ const AppSidebar = () => {
       <SidebarHeader className="dark:bg-slate-900 p-4">
         {open && (
           <div className="flex items-center mt-1">
-            <Link to="/live-map" className="flex items-center gap-2">
-              {/* <Zap /> */}
-              <img src="/pwa-192x192.png" alt="logo" className="w-8 h-8" />
-              <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                PowerSignal
-              </span>
-            </Link>
+            <Logo />
           </div>
         )}
       </SidebarHeader>

@@ -14,6 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import Logo from "@/components/logo";
 
 const Landing = () => {
   const router = useRouter();
@@ -31,12 +32,7 @@ const Landing = () => {
       <nav className="fixed w-full dark:bg-slate-900/95 border-b backdrop-blur-sm z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2 ">
-              <Zap />
-              <span className="text-xl font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                PowerSignal
-              </span>
-            </Link>
+            <Logo />
             <div className="hidden md:flex items-center gap-8">
               <Link
                 hash="features"
@@ -105,7 +101,7 @@ const Landing = () => {
                   <Menu />
                 </Button>
               </SheetTrigger>
-              <SheetContent className="bg-slate-900">
+              <SheetContent className="dark:bg-slate-900">
                 <div className="flex flex-col gap-4 p-4 mt-10">
                   {landingNavLinks.map((navLink) => (
                     <Link
@@ -250,7 +246,7 @@ const Landing = () => {
             <h2 className="text-3xl font-semibold">
               Why Choose{" "}
               <span className="bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                PowerSignal
+                PowerWatch
               </span>
             </h2>
             <p className="text-lg text-muted-foreground mt-2">
@@ -317,7 +313,7 @@ const Landing = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-slate-400">
-              Everything you need to know about PowerSignal
+              Everything you need to know about PowerWatch
             </p>
           </div>
           <Accordion type="single" collapsible className="max-w-lg mx-auto">
@@ -341,7 +337,7 @@ const Landing = () => {
               <div className="text-sm text-slate-400">&copy; {year}</div>
               <Link to="/" className="flex items-center gap-2 ">
                 <span className="text-sm font-bold bg-linear-to-r from-amber-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
-                  PowerSignal
+                  PowerWatch
                 </span>
               </Link>
             </div>
