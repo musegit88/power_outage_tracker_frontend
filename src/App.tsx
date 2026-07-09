@@ -1,19 +1,18 @@
-import { createRouter, RouterProvider } from "@tanstack/react-router";
-
-import { routeTree } from "./routeTree.gen";
+import { RouterProvider } from "@tanstack/react-router";
 import { useAuth } from "./hooks/useAuth";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { router } from "./lib/tanstack-router";
 
-// Create a new router instance
-const router = createRouter({
-  routeTree,
-  context: {
-    // auth will be passed down from App component
-    auth: undefined!,
-  },
-});
+// // Create a new router instance
+// export const router = createRouter({
+//   routeTree,
+//   context: {
+//     // auth will be passed down from App component
+//     auth: undefined!,
+//   },
+// });
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
