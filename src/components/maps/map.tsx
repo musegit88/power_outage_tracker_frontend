@@ -121,7 +121,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
       }
     });
 
-    //____________ close popup when clicking on map, during dragstart, during load, and during resize _________________
+    //____________ close popup when clicking on map, during dragstart, during load, resize and during zoom _________________
     mapRef.current.on("click", () => {
       setActiveMarker(undefined);
     });
@@ -132,6 +132,9 @@ const Map = ({ limit, offset, status }: MapProps) => {
       setActiveMarker(undefined);
     });
     mapRef.current.on("resize", () => {
+      setActiveMarker(undefined);
+    });
+    mapRef.current.on("zoom", () => {
       setActiveMarker(undefined);
     });
     // ___________________________________________
