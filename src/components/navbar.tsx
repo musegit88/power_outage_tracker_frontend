@@ -52,7 +52,12 @@ const Navbar = () => {
               {navLink.title}
             </Link>
           ))}
-          <Button variant="outline" size="icon" onClick={handleLogout}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleLogout}
+            title="Logout"
+          >
             <LogOut />
             <span className="sr-only">Logout</span>
           </Button>
