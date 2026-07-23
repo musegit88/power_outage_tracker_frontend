@@ -56,13 +56,16 @@ class TokenService {
     localStorage.removeItem(USER_KEY);
   }
 
-  // Check if user is authenticated
+  // Check if user is authenticated (valid access token OR has refresh token)
   isAuthenticated() {
     const token = this.getAccessToken();
-    if (!token) return false;
+    const refreshToken = this.getRefreshToken();
 
-    // Optionally check if token is expired
-    return !this.isTokenExpired(token);
+    if (token && !this.isTokenExpired(token)) {
+      return true;
+    }
+
+    return !!refreshToken;
   }
 
   // Decode JWT token to get payload

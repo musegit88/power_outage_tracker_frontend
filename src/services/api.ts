@@ -3,6 +3,24 @@ import tokenService from "./tokenService";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+let isRefreshing = false
+let failedQueue: {
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void
+}[] = []
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error)
+    }
+    else {
+      resolve(token!)
+    }
+  })
+  failedQueue = []
+}
+
 // Custom API error that preserves all extra fields the server sends
 export class ApiError extends Error {
   status: number;
@@ -30,7 +48,6 @@ export class ApiError extends Error {
     return this.status === 409;
   }
 }
-
 interface options {
   method?: string | undefined;
   body?: BodyInit | null;
@@ -38,18 +55,103 @@ interface options {
 }
 
 class ApiServices {
-  async request(endpoint: string, options: options = {}) {
-    const token = tokenService.getAccessToken();
+  async refreshTokens(): Promise<{ accessToken: string; refreshToken: string }> {
+    const refreshToken = tokenService.getRefreshToken();
+    if (!refreshToken) {
+      tokenService.clearAuth();
+      window.location.href = "/signin";
+      throw new ApiError(401, { error: "Session expired" });
+    }
+
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then((token) => {
+        return { accessToken: token as string, refreshToken: tokenService.getRefreshToken() || "" };
+      });
+    }
+
+    isRefreshing = true;
+    try {
+      const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawToken: refreshToken }),
+      });
+
+      if (!refreshResponse.ok) {
+        tokenService.clearAuth();
+        processQueue(new Error("Refresh failed"), null);
+        window.location.href = "/signin";
+        throw new ApiError(401, { error: "Session expired" });
+      }
+
+      const refreshData = await refreshResponse.json();
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData;
+
+      tokenService.setAccessToken(newAccessToken);
+      tokenService.setRefreshToken(newRefreshToken);
+
+      processQueue(null, newAccessToken);
+      return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      processQueue(error, null);
+      throw error;
+    } finally {
+      isRefreshing = false;
+    }
+  }
+
+  async request(endpoint: string, options: options = {}, _isRetry = false): Promise<any> {
+    let accessToken = tokenService.getAccessToken();
+
+    // Proactive refresh: if access token is expired and we have a refresh token, refresh BEFORE fetch!
+    if (
+      accessToken &&
+      tokenService.isTokenExpired(accessToken) &&
+      !_isRetry &&
+      !endpoint.startsWith("/auth/")
+    ) {
+      try {
+        const tokens = await this.refreshTokens();
+        accessToken = tokens.accessToken;
+      } catch (err) {
+        // If refresh fails, user will be redirected to /signin
+      }
+    }
+
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       ...options.headers,
-      Authorization: `Bearer ${token}`,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     };
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
     });
+
+    if (response.status === 401 && !_isRetry) {
+      // Don't try to refresh on auth endpoints (login/register/refresh)
+      if (
+        endpoint.startsWith("/auth/login") ||
+        endpoint.startsWith("/auth/register") ||
+        endpoint.startsWith("/auth/refresh")
+      ) {
+        const data = await response.json();
+        throw new ApiError(response.status, data as Record<string, unknown>);
+      }
+
+      await this.refreshTokens();
+      return this.request(endpoint, options, true);
+    }
+
+    // If we retried and still got 401, the session is truly gone
+    if (response.status === 401 && _isRetry) {
+      tokenService.clearAuth();
+      window.location.href = "/signin";
+      throw new ApiError(401, { error: "Session expired" });
+    }
 
     const data = await response.json();
 
@@ -76,10 +178,10 @@ class ApiServices {
       method: "POST",
       body: JSON.stringify({ name, email, phoneNumber, password, consents }),
     });
-    const { token, refreshToken, user } = data.response;
+    const { accessToken, refreshToken, user } = data.response;
 
     // Store tokens
-    tokenService.setAccessToken(token);
+    tokenService.setAccessToken(accessToken);
     if (refreshToken) {
       tokenService.setRefreshToken(refreshToken);
     }
@@ -94,10 +196,10 @@ class ApiServices {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    const { token, refreshToken, user } = data.response;
+    const { accessToken, refreshToken, user } = data.response;
 
     // Store tokens
-    tokenService.setAccessToken(token!);
+    tokenService.setAccessToken(accessToken);
     if (refreshToken) {
       tokenService.setRefreshToken(refreshToken);
     }
@@ -149,8 +251,8 @@ class ApiServices {
   async getAllOutages(limit: number, offset: number, status?: string) {
     return status && status !== "ALL"
       ? this.request(
-          `/outages?limit=${limit}&offset=${offset}&status=${status}`,
-        )
+        `/outages?limit=${limit}&offset=${offset}&status=${status}`,
+      )
       : this.request(`/outages?limit=${limit}&offset=${offset}`);
   }
 
