@@ -30,9 +30,14 @@ const Map = ({ limit, offset, status }: MapProps) => {
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<mapboxgl.Marker>(null);
+  const userMarkerElementRef = useRef<HTMLDivElement>(null);
+
+  const setPositionsRef = useRef(setPositions)
+  const hasFlownRef = useRef(false)
 
   const { isMapLoading, setIsMapLoading } = useMapLoadingState();
   const [makeDraggable, setMakeDraggable] = useState(false);
+  const [isBannerVisible, setIsBannerVisible] = useState(isOutOfBounds);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   const [outages, setOutages] = useState<Outage[]>([]);
   const [activeMarker, setActiveMarker] = useState<Outage>();
@@ -41,26 +46,34 @@ const Map = ({ limit, offset, status }: MapProps) => {
   const handleUseDefaultLocation = () => {
     setPositions({ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] });
     setMakeDraggable(false);
+    setIsBannerVisible(false);
   };
 
   // Handle Update location button
   const handleUpdateLocation = () => {
     setMakeDraggable(true);
+    setIsBannerVisible(false);
   };
+
+  useEffect(() => { setPositionsRef.current = setPositions }, [setPositions])
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
+
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-    mapRef.current = new mapboxgl.Map({
+
+    const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      center: [positions?.lng || 38, positions?.lat || 9],
+      center: [positions?.lng || DEFAULT_CENTER[0], positions?.lat || DEFAULT_CENTER[1]],
       zoom: 9,
       style:
         theme === "dark"
           ? "mapbox://styles/mapbox/dark-v11"
           : "mapbox://styles/mapbox/streets-v12",
     });
-    setMapInstance(mapRef.current);
+
+    mapRef.current = map
+    setMapInstance(map);
 
     // Adding map controls but not the zoom button
     mapRef.current.addControl(
@@ -74,83 +87,104 @@ const Map = ({ limit, offset, status }: MapProps) => {
     ]);
 
     // changing the loading state when the map is loaded
-    mapRef.current.on("load", () => {
+    map.on("load", () => {
       setIsMapLoading(true);
     });
 
     // Hide loading overlay once the map is idle
-    mapRef.current.on("idle", () => {
+    map.on("idle", () => {
       setIsMapLoading(false);
     });
 
-    // Determine effective center: use default if out of bounds, else user position
-    const effectiveCenter: [number, number] = isOutOfBounds
-      ? DEFAULT_CENTER
-      : [
-          positions?.lng || DEFAULT_CENTER[0],
-          positions?.lat || DEFAULT_CENTER[1],
-        ];
+    // custom marker element
+    const element = document.createElement("div");
+    element.style.width = "32px";
+    element.style.height = "32px";
+    element.style.color = "#4268ff";
+    element.style.zIndex="50"
+    element.innerHTML = `<svg viewBox="-4 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path fill="currentColor" transform="translate(-106, -413)" d="M118,422 C116.343,422 115,423.343 115,425 C115,426.657 116.343,428 118,428 C119.657,428 121,426.657 121,425 C121,423.343 119.657,422 118,422 L118,422 Z M118,430 C115.239,430 113,427.762 113,425 C113,422.238 115.239,420 118,420 C120.761,420 123,422.238 123,425 C123,427.762 120.761,430 118,430 L118,430 Z M118,413 C111.373,413 106,418.373 106,425 C106,430.018 116.005,445.011 118,445 C119.964,445.011 130,429.95 130,425 C130,418.373 124.627,413 118,413 L118,413 Z"/></svg>`;
+    userMarkerElementRef.current = element;
 
-    // Fly to the effective location after the first idle event
-    mapRef.current.once("idle", () => {
-      mapRef.current?.flyTo({
+    // User location marker
+    const marker = new mapboxgl.Marker({
+      draggable: false,
+      element,
+    }).setLngLat(DEFAULT_CENTER).addTo(map);
+    markerRef.current = marker;
+
+    marker.on("dragend", () => {
+      const lngLat = marker.getLngLat();
+      setPositionsRef.current({ lng: lngLat.lng, lat: lngLat.lat });
+      setMakeDraggable(false);
+      marker.setDraggable(false);
+      toast.success("Location updated successfully");
+    });
+
+    //____________ close popup when clicking on map, during dragstart, during load, resize and during zoom _________________
+    const cloasePopup = () => setActiveMarker(undefined)
+    map.on("click", cloasePopup);
+    map.on("dragstart", cloasePopup);
+    map.on("load", cloasePopup);
+    map.on("resize", cloasePopup);
+    map.on("zoom", cloasePopup);
+    // ___________________________________________
+
+    // Cleaning up the map
+    return () => {
+      hasFlownRef.current = false;
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+      userMarkerElementRef.current = null;
+      setMapInstance(null);
+    };
+  }, [
+    theme,
+    setIsMapLoading,
+  ]);
+
+  // change color of the marker based on makeDraggable state
+  useEffect(() => {
+    if (!userMarkerElementRef.current) return;
+    userMarkerElementRef.current.style.color = makeDraggable
+      ? "#ef4444"
+      : "#4268ff";
+  }, [makeDraggable]);
+
+  // Determine effective center: use default if out of bounds, else user position
+  const effectiveCenter: [number, number] = isOutOfBounds
+    ? DEFAULT_CENTER
+    : [
+      positions?.lng || DEFAULT_CENTER[0],
+      positions?.lat || DEFAULT_CENTER[1],
+    ];
+
+    //  fly to user location
+  useEffect(() => {
+    if (!markerRef.current || !mapRef.current) return;
+
+    markerRef.current.setLngLat(effectiveCenter);
+
+    // Fly only on first real location fix, not on every drag
+    if (!hasFlownRef.current && positions) {
+      hasFlownRef.current = true;
+      mapRef.current.flyTo({
         center: effectiveCenter,
         zoom: 12,
         speed: 1.2,
         curve: 1.42,
         essential: true,
-      });
-    });
+      })
+    }
+  }, [effectiveCenter, positions])
 
-    // Adding the Marker to the effective location
-    markerRef.current = new mapboxgl.Marker({
-      draggable: makeDraggable,
-      color: makeDraggable ? "red" : undefined,
-    })
-      .setLngLat(effectiveCenter)
-      .addTo(mapRef.current);
+  //  control  marker draggable state
+  useEffect(() => {
+    if (!mapRef.current) return;
 
-    // Update location when marker is dragged
-    markerRef.current.on("dragend", () => {
-      const lngLat = markerRef.current?.getLngLat();
-      console.log(lngLat);
-      if (lngLat) {
-        setPositions({ lng: lngLat.lng, lat: lngLat.lat });
-        setMakeDraggable(false);
-        toast.success("Location updated successfully");
-      }
-    });
+    markerRef.current?.setDraggable(makeDraggable,);
+  }, [makeDraggable])
 
-    //____________ close popup when clicking on map, during dragstart, during load, resize and during zoom _________________
-    mapRef.current.on("click", () => {
-      setActiveMarker(undefined);
-    });
-    mapRef.current.on("dragstart", () => {
-      setActiveMarker(undefined);
-    });
-    mapRef.current.on("load", () => {
-      setActiveMarker(undefined);
-    });
-    mapRef.current.on("resize", () => {
-      setActiveMarker(undefined);
-    });
-    mapRef.current.on("zoom", () => {
-      setActiveMarker(undefined);
-    });
-    // ___________________________________________
-
-    // Cleaning up the map
-    return () => {
-      mapRef.current?.remove();
-    };
-  }, [
-    theme,
-    positions,
-    isOutOfBounds,
-    setIsMapLoading,
-    makeDraggable,
-    setPositions,
-  ]);
 
   const handleMarkerClick = (outage: Outage) => {
     setActiveMarker(outage);
@@ -210,6 +244,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
   );
 
   useEffect(() => {
+    socketService.connect()
     socketService.onNewOutage(handleOutage);
     socketService.onOutageStatusChanged(handleStatusChange);
     socketService.onOutageConfirmed(handleConfirmation);
@@ -224,7 +259,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
       <div ref={mapContainerRef} className="relative w-full h-full" />
 
       {/* Out-of-bounds warning banner */}
-      {isOutOfBounds && (
+      {isBannerVisible && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
           <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-950/80 backdrop-blur-md px-4 py-3 shadow-lg text-amber-200">
             <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
