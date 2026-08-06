@@ -55,10 +55,16 @@ const LocationPermissionDialog = () => {
     return () => clearInterval(intervalId);
   }, [userLocation.permissionState, isPaused]);
 
-  // resume the interval after 5 seconds
-  setTimeout(() => {
+const handleStepToggle =() =>{
+  setIsPaused(true);
+  setSteps((prev) => (prev === 1 ? 2 : 1));
+
+  // resume the interval after the given seconds
+  window. setTimeout(() => {
     setIsPaused(false);
-  }, 5000);
+  }, 5000)
+}
+
 
   return (
     <>
@@ -114,10 +120,9 @@ const LocationPermissionDialog = () => {
             </DialogDescription>
             <DialogFooter className="bg-transparent">
               <Button
-                onClick={() => {
-                  setIsPaused(true);
-                  setSteps((prev) => (prev === 1 ? 2 : 1));
-                }}
+                onClick={
+                handleStepToggle
+              }
                 className="rounded-md"
               >
                 {steps === 1 ? "Next" : "Previous"}
