@@ -125,7 +125,6 @@ class ApiServices {
       ...options.headers,
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     };
-
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       headers,
@@ -248,12 +247,14 @@ class ApiServices {
     });
   }
 
-  async getAllOutages(limit: number, offset: number, status?: string) {
+  async getAllOutages(limit: number, offset: number, status?: string,) {
+    // fetch all active and resolved outages (resolved within 24 hours and not archived)
+    const archived = "false"
     return status && status !== "ALL"
       ? this.request(
-        `/outages?limit=${limit}&offset=${offset}&status=${status}`,
+        `/outages?limit=${limit}&offset=${offset}&status=${status}&archived=${archived}`,
       )
-      : this.request(`/outages?limit=${limit}&offset=${offset}`);
+      : this.request(`/outages?limit=${limit}&offset=${offset}&archived=${archived}`,);
   }
 
   async getInMapBounds(
