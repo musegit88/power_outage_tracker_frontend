@@ -1,3 +1,5 @@
+import type { User } from "@/types";
+
 interface DecodedToken {
   userId: string;
   email?: string;
@@ -31,7 +33,7 @@ class TokenService {
   }
 
   // Store user data
-  setUser(user: string) {
+  setUser(user: User) {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   }
 

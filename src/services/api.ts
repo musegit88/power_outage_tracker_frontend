@@ -1,25 +1,29 @@
-import type { CreateOutage, User } from "@/types";
+import type {
+  CreateOutage,
+  ProfileResponse,
+  ResponseType,
+  User,
+} from "@/types";
 import tokenService from "./tokenService";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-let isRefreshing = false
+let isRefreshing = false;
 let failedQueue: {
   resolve: (token: string) => void;
-  reject: (err: unknown) => void
-}[] = []
+  reject: (err: unknown) => void;
+}[] = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
-      reject(error)
+      reject(error);
+    } else {
+      resolve(token!);
     }
-    else {
-      resolve(token!)
-    }
-  })
-  failedQueue = []
-}
+  });
+  failedQueue = [];
+};
 
 // Custom API error that preserves all extra fields the server sends
 export class ApiError extends Error {
@@ -55,7 +59,10 @@ interface options {
 }
 
 class ApiServices {
-  async refreshTokens(): Promise<{ accessToken: string; refreshToken: string }> {
+  async refreshTokens(): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
     const refreshToken = tokenService.getRefreshToken();
     if (!refreshToken) {
       tokenService.clearAuth();
@@ -67,7 +74,10 @@ class ApiServices {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
       }).then((token) => {
-        return { accessToken: token as string, refreshToken: tokenService.getRefreshToken() || "" };
+        return {
+          accessToken: token as string,
+          refreshToken: tokenService.getRefreshToken() || "",
+        };
       });
     }
 
@@ -87,7 +97,8 @@ class ApiServices {
       }
 
       const refreshData = await refreshResponse.json();
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshData;
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        refreshData;
 
       tokenService.setAccessToken(newAccessToken);
       tokenService.setRefreshToken(newRefreshToken);
@@ -102,7 +113,11 @@ class ApiServices {
     }
   }
 
-  async request(endpoint: string, options: options = {}, _isRetry = false): Promise<any> {
+  async request<T>(
+    endpoint: string,
+    options: options = {},
+    _isRetry = false,
+  ): Promise<T> {
     let accessToken = tokenService.getAccessToken();
 
     // Proactive refresh: if access token is expired and we have a refresh token, refresh BEFORE fetch!
@@ -117,6 +132,7 @@ class ApiServices {
         accessToken = tokens.accessToken;
       } catch (err) {
         // If refresh fails, user will be redirected to /signin
+        console.error(err);
       }
     }
 
@@ -157,7 +173,6 @@ class ApiServices {
     if (!response.ok) {
       throw new ApiError(response.status, data as Record<string, unknown>);
     }
-
     return data;
   }
 
@@ -172,8 +187,8 @@ class ApiServices {
       consentType: string;
       accepted: boolean;
     }[],
-  ) {
-    const data = await this.request("/auth/register", {
+  ): Promise<ResponseType> {
+    const data = await this.request<ResponseType>("/auth/register", {
       method: "POST",
       body: JSON.stringify({ name, email, phoneNumber, password, consents }),
     });
@@ -190,8 +205,8 @@ class ApiServices {
     return data;
   }
 
-  async login(email: string, password: string) {
-    const data = await this.request("/auth/login", {
+  async login(email: string, password: string): Promise<ResponseType> {
+    const data = await this.request<ResponseType>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
@@ -216,8 +231,7 @@ class ApiServices {
   }
 
   async getProfile(): Promise<User> {
-    const response = await this.request("/auth/profile");
-
+    const response = await this.request<ProfileResponse>("/auth/profile");
     // Update stored user data
     tokenService.setUser(response.user);
     // return this.request("/auth/profile");
@@ -247,14 +261,16 @@ class ApiServices {
     });
   }
 
-  async getAllOutages(limit: number, offset: number, status?: string,) {
+  async getAllOutages(limit: number, offset: number, status?: string) {
     // fetch all active and resolved outages (resolved within 24 hours and not archived)
-    const archived = "false"
+    const archived = "false";
     return status && status !== "ALL"
       ? this.request(
-        `/outages?limit=${limit}&offset=${offset}&status=${status}&archived=${archived}`,
-      )
-      : this.request(`/outages?limit=${limit}&offset=${offset}&archived=${archived}`,);
+          `/outages?limit=${limit}&offset=${offset}&status=${status}&archived=${archived}`,
+        )
+      : this.request(
+          `/outages?limit=${limit}&offset=${offset}&archived=${archived}`,
+        );
   }
 
   async getInMapBounds(

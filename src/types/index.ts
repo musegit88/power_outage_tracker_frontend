@@ -48,3 +48,16 @@ export interface User {
   role: "USER" | "ADMIN" | "SUPER_ADMIN";
   createdAt: string;
 }
+
+export interface ResponseType {
+  response: {
+    accessToken: string;
+    refreshToken: string;
+    user: User;
+  };
+}
+
+export interface ProfileResponse {
+  user: User;
+  message: string;
+}
