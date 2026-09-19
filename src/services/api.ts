@@ -273,7 +273,7 @@ class ApiServices {
     status?: string,
   ): Promise<GetallOutagesResponseType> {
     // fetch all active and resolved outages (resolved within 24 hours and not archived)
-    const archived = "true";
+    const archived = "false";
     return status && status !== "ALL"
       ? this.request(
           `/outages?limit=${limit}&offset=${offset}&status=${status}&archived=${archived}`,
