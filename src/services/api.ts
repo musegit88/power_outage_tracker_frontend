@@ -1,7 +1,11 @@
 import type {
+  AddConfirmationResponseType,
   CreateOutage,
+  CreateOutageResponseType,
+  GetallOutagesResponseType,
   ProfileResponse,
-  ResponseType,
+  AuthResponseType,
+  UpdateOutageStatusresponseType,
   User,
 } from "@/types";
 import tokenService from "./tokenService";
@@ -187,8 +191,8 @@ class ApiServices {
       consentType: string;
       accepted: boolean;
     }[],
-  ): Promise<ResponseType> {
-    const data = await this.request<ResponseType>("/auth/register", {
+  ): Promise<AuthResponseType> {
+    const data = await this.request<AuthResponseType>("/auth/register", {
       method: "POST",
       body: JSON.stringify({ name, email, phoneNumber, password, consents }),
     });
@@ -205,8 +209,8 @@ class ApiServices {
     return data;
   }
 
-  async login(email: string, password: string): Promise<ResponseType> {
-    const data = await this.request<ResponseType>("/auth/login", {
+  async login(email: string, password: string): Promise<AuthResponseType> {
+    const data = await this.request<AuthResponseType>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
@@ -250,7 +254,9 @@ class ApiServices {
 
   // outages endpoints
 
-  async createOutage(outageData: CreateOutage) {
+  async createOutage(
+    outageData: CreateOutage,
+  ): Promise<CreateOutageResponseType> {
     return this.request("/outages/create", {
       method: "POST",
       body: JSON.stringify({
@@ -261,9 +267,13 @@ class ApiServices {
     });
   }
 
-  async getAllOutages(limit: number, offset: number, status?: string) {
+  async getAllOutages(
+    limit: number,
+    offset: number,
+    status?: string,
+  ): Promise<GetallOutagesResponseType> {
     // fetch all active and resolved outages (resolved within 24 hours and not archived)
-    const archived = "false";
+    const archived = "true";
     return status && status !== "ALL"
       ? this.request(
           `/outages?limit=${limit}&offset=${offset}&status=${status}&archived=${archived}`,
@@ -284,7 +294,10 @@ class ApiServices {
     );
   }
 
-  async addConfirmation(outageId: string, userId: string) {
+  async addConfirmation(
+    outageId: string,
+    userId: string,
+  ): Promise<AddConfirmationResponseType> {
     return this.request(`/outages/${outageId}/confirm`, {
       method: "POST",
       body: JSON.stringify({ userId }),
@@ -295,7 +308,10 @@ class ApiServices {
     return this.request(`/outages/${outageId}`);
   }
 
-  async updateOutageStatus(outageId: string, status: string) {
+  async updateOutageStatus(
+    outageId: string,
+    status: string,
+  ): Promise<UpdateOutageStatusresponseType> {
     return this.request(`/outages/${outageId}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status }),

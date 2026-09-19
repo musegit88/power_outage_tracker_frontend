@@ -68,7 +68,7 @@ const Report = () => {
     },
     onSubmit: async ({ value }) => {
       try {
-        const response: { message: string } = await api.createOutage(value);
+        const response = await api.createOutage(value);
         console.error(typeof response, response);
         toast.success(response.message);
       } catch (error) {
@@ -165,7 +165,7 @@ const Report = () => {
               >
                 <FieldGroup>
                   <div id="location">
-                    <Card className="h-[480px] ring-0 dark:bg-slate-800 backdrop-filter backdrop-blur-sm border dark:border-slate-700 rounded-md transition-all shadow-sm">
+                    <Card className="h-120 ring-0 dark:bg-slate-800 backdrop-filter backdrop-blur-sm border dark:border-slate-700 rounded-md transition-all shadow-sm">
                       <CardHeader>
                         <CardTitle
                           className={cn(

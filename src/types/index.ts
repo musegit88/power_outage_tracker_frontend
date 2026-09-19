@@ -49,7 +49,7 @@ export interface User {
   createdAt: string;
 }
 
-export interface ResponseType {
+export interface AuthResponseType {
   response: {
     accessToken: string;
     refreshToken: string;
@@ -60,4 +60,67 @@ export interface ResponseType {
 export interface ProfileResponse {
   user: User;
   message: string;
+}
+
+export interface GetallOutagesResponseType {
+  count: number;
+  outages: Outage[];
+}
+
+export interface AddConfirmationResponseType {
+  error?: string;
+  message?: string;
+  confirmation: {
+    outage: {
+      _count: {
+        confirmations: number;
+      };
+    } & {
+      id: string;
+      createdAt: Date;
+      updatedAt: Date;
+      userId: string;
+      locationName: string;
+      description: string;
+      whatHappened: string;
+      latitude: number;
+      longitude: number;
+      affectedHomesEstimated: number | null;
+      status: string;
+      severity: string;
+      resolvedAt: Date | null;
+      archived: boolean;
+    };
+  } & {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    outageId: string;
+    userId: string;
+  };
+}
+
+export interface UpdateOutageStatusresponseType {
+  error?: string;
+  message?: string;
+  outage: Outage;
+}
+
+export interface CreateOutageResponseType {
+  error?: string;
+  message?: string;
+  outage?: Outage;
+  resetAt?: Date;
+  remaining?: number;
+  nearbyOutages?: {
+    id: string;
+    locationName: string;
+    description: string;
+    distanceKm: string;
+    status: string;
+    severity: string;
+    affectedHomesEstimated: number;
+    whatHappened: string;
+    createdAt: Date;
+  }[];
 }
