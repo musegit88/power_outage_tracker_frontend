@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { Loader2, Locate, MapPin, TriangleAlert } from "lucide-react";
+import { Loader2, Locate, MapPin, TriangleAlert, X } from "lucide-react";
 
 import socketService from "@/services/socketService";
 import type { Outage } from "@/types";
@@ -32,8 +32,8 @@ const Map = ({ limit, offset, status }: MapProps) => {
   const markerRef = useRef<mapboxgl.Marker>(null);
   const userMarkerElementRef = useRef<HTMLDivElement>(null);
 
-  const setPositionsRef = useRef(setPositions)
-  const hasFlownRef = useRef(false)
+  const setPositionsRef = useRef(setPositions);
+  const hasFlownRef = useRef(false);
 
   const { isMapLoading, setIsMapLoading } = useMapLoadingState();
   const [makeDraggable, setMakeDraggable] = useState(false);
@@ -55,7 +55,9 @@ const Map = ({ limit, offset, status }: MapProps) => {
     setIsBannerVisible(false);
   };
 
-  useEffect(() => { setPositionsRef.current = setPositions }, [setPositions])
+  useEffect(() => {
+    setPositionsRef.current = setPositions;
+  }, [setPositions]);
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -64,7 +66,10 @@ const Map = ({ limit, offset, status }: MapProps) => {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      center: [positions?.lng || DEFAULT_CENTER[0], positions?.lat || DEFAULT_CENTER[1]],
+      center: [
+        positions?.lng || DEFAULT_CENTER[0],
+        positions?.lat || DEFAULT_CENTER[1],
+      ],
       zoom: 9,
       style:
         theme === "dark"
@@ -72,7 +77,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
           : "mapbox://styles/mapbox/streets-v12",
     });
 
-    mapRef.current = map
+    mapRef.current = map;
     setMapInstance(map);
 
     // Adding map controls but not the zoom button
@@ -101,15 +106,22 @@ const Map = ({ limit, offset, status }: MapProps) => {
     element.style.width = "32px";
     element.style.height = "32px";
     element.style.color = "#4268ff";
-    element.style.zIndex="50"
-    element.innerHTML = `<svg viewBox="-4 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path fill="currentColor" transform="translate(-106, -413)" d="M118,422 C116.343,422 115,423.343 115,425 C115,426.657 116.343,428 118,428 C119.657,428 121,426.657 121,425 C121,423.343 119.657,422 118,422 L118,422 Z M118,430 C115.239,430 113,427.762 113,425 C113,422.238 115.239,420 118,420 C120.761,420 123,422.238 123,425 C123,427.762 120.761,430 118,430 L118,430 Z M118,413 C111.373,413 106,418.373 106,425 C106,430.018 116.005,445.011 118,445 C119.964,445.011 130,429.95 130,425 C130,418.373 124.627,413 118,413 L118,413 Z"/></svg>`;
+    element.title = "Your location";
+    element.innerHTML = `<svg title="Your location" viewBox="-4 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path fill="currentColor" transform="translate(-106, -413)" d="M118,422 C116.343,422 115,423.343 115,425 C115,426.657 116.343,428 118,428 C119.657,428 121,426.657 121,425 C121,423.343 119.657,422 118,422 L118,422 Z M118,430 C115.239,430 113,427.762 113,425 C113,422.238 115.239,420 118,420 C120.761,420 123,422.238 123,425 C123,427.762 120.761,430 118,430 L118,430 Z M118,413 C111.373,413 106,418.373 106,425 C106,430.018 116.005,445.011 118,445 C119.964,445.011 130,429.95 130,425 C130,418.373 124.627,413 118,413 L118,413 Z"/></svg>`;
     userMarkerElementRef.current = element;
 
+    const locationPopup = new mapboxgl.Popup({
+      offset: 25,
+      closeButton: false,
+    }).setText("Your location");
     // User location marker
     const marker = new mapboxgl.Marker({
       draggable: false,
       element,
-    }).setLngLat(DEFAULT_CENTER).addTo(map);
+    })
+      .setLngLat(DEFAULT_CENTER)
+      .addTo(map)
+      .setPopup(locationPopup);
     markerRef.current = marker;
 
     marker.on("dragend", () => {
@@ -121,7 +133,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
     });
 
     //____________ close popup when clicking on map, during dragstart, during load, resize and during zoom _________________
-    const cloasePopup = () => setActiveMarker(undefined)
+    const cloasePopup = () => setActiveMarker(undefined);
     map.on("click", cloasePopup);
     map.on("dragstart", cloasePopup);
     map.on("load", cloasePopup);
@@ -138,10 +150,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
       userMarkerElementRef.current = null;
       setMapInstance(null);
     };
-  }, [
-    theme,
-    setIsMapLoading,
-  ]);
+  }, [theme, setIsMapLoading]);
 
   // change color of the marker based on makeDraggable state
   useEffect(() => {
@@ -155,11 +164,11 @@ const Map = ({ limit, offset, status }: MapProps) => {
   const effectiveCenter: [number, number] = isOutOfBounds
     ? DEFAULT_CENTER
     : [
-      positions?.lng || DEFAULT_CENTER[0],
-      positions?.lat || DEFAULT_CENTER[1],
-    ];
+        positions?.lng || DEFAULT_CENTER[0],
+        positions?.lat || DEFAULT_CENTER[1],
+      ];
 
-    //  fly to user location
+  //  fly to user location
   useEffect(() => {
     if (!markerRef.current || !mapRef.current) return;
 
@@ -174,17 +183,16 @@ const Map = ({ limit, offset, status }: MapProps) => {
         speed: 1.2,
         curve: 1.42,
         essential: true,
-      })
+      });
     }
-  }, [effectiveCenter, positions])
+  }, [effectiveCenter, positions]);
 
   //  control  marker draggable state
   useEffect(() => {
     if (!mapRef.current) return;
 
-    markerRef.current?.setDraggable(makeDraggable,);
-  }, [makeDraggable])
-
+    markerRef.current?.setDraggable(makeDraggable);
+  }, [makeDraggable]);
 
   const handleMarkerClick = (outage: Outage) => {
     setActiveMarker(outage);
@@ -244,7 +252,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
   );
 
   useEffect(() => {
-    socketService.connect()
+    socketService.connect();
     socketService.onNewOutage(handleOutage);
     socketService.onOutageStatusChanged(handleStatusChange);
     socketService.onOutageConfirmed(handleConfirmation);
@@ -256,8 +264,56 @@ const Map = ({ limit, offset, status }: MapProps) => {
   }, [handleOutage, handleStatusChange, handleConfirmation]);
   return (
     <>
-      <div ref={mapContainerRef} className="relative w-full h-full" />
-
+      <div ref={mapContainerRef} className="relative w-full h-full">
+        {/* change location button */}
+        <div className="absolute top-0 right-0 z-50">
+          <div className="mt-12 mr-2.5">
+            {!makeDraggable && (
+              <Button
+                disabled={makeDraggable}
+                onClick={handleUpdateLocation}
+                size="icon"
+                title="change location"
+              >
+                <svg
+                  viewBox="-4 0 32 32"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="32"
+                  height="32"
+                >
+                  <path
+                    fill="currentColor"
+                    transform="translate(-106, -413)"
+                    d="M118,422 C116.343,422 115,423.343 115,425 C115,426.657 116.343,428 118,428 C119.657,428 121,426.657 121,425 C121,423.343 119.657,422 118,422 L118,422 Z M118,430 C115.239,430 113,427.762 113,425 C113,422.238 115.239,420 118,420 C120.761,420 123,422.238 123,425 C123,427.762 120.761,430 118,430 L118,430 Z M118,413 C111.373,413 106,418.373 106,425 C106,430.018 116.005,445.011 118,445 C119.964,445.011 130,429.95 130,425 C130,418.373 124.627,413 118,413 L118,413 Z"
+                  />
+                </svg>
+              </Button>
+            )}
+            {makeDraggable && (
+              <Button
+                onClick={() => setMakeDraggable(false)}
+                size="icon"
+                variant="destructive"
+                title="cancle location change"
+              >
+                <X />
+              </Button>
+            )}
+          </div>
+        </div>
+        {!isMapLoading &&
+          mapInstance &&
+          outages &&
+          outages.map((outage) => (
+            <Marker
+              key={outage.id}
+              data={outage}
+              map={mapInstance}
+              isActive={activeMarker?.id === outage.id}
+              onClick={handleMarkerClick}
+            />
+          ))}
+      </div>
       {/* Out-of-bounds warning banner */}
       {isBannerVisible && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
@@ -302,7 +358,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
           </div>
         </div>
       )}
-      {!isMapLoading &&
+      {/* {!isMapLoading &&
         mapInstance &&
         outages &&
         outages.map((outage) => (
@@ -313,7 +369,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
             isActive={activeMarker?.id === outage.id}
             onClick={handleMarkerClick}
           />
-        ))}
+        ))} */}
       {mapInstance && <Popup activeMarker={activeMarker} map={mapInstance} />}
     </>
   );
