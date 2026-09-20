@@ -132,7 +132,15 @@ const ReportMap = ({
   }, [field.state.value.longitude, field.state.value.latitude]);
 
   const handleUseDefaultLocation = () => {
+    if (!mapRef.current) return;
     setPositions({ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] });
+    mapRef.current.flyTo({
+      center: [DEFAULT_CENTER[0], DEFAULT_CENTER[1]],
+      zoom: 15,
+      speed: 1.2,
+      curve: 1.42,
+      essential: true,
+    });
   };
   return (
     <div className="relative h-full w-full">
