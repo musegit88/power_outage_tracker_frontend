@@ -10,6 +10,7 @@ import { useUserLocation } from "@/hooks/useUserLocation";
 import { ApiError } from "@/services/api";
 import { createOutageSchema } from "@/validators/createOutage";
 
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -32,12 +33,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { toast } from "sonner";
-import Voltage from "./icons/voltage";
-import Minor from "./icons/minor";
-import Moderate from "./icons/moderate";
-import Severe from "./icons/severe";
-import ReportMap from "./maps/report-map";
+import Voltage from "@/components/icons/voltage";
+import Minor from "@/components/icons/minor";
+import Moderate from "@/components/icons/moderate";
+import Severe from "@/components/icons/severe";
+import ReportMap from "@/components/maps/report-map";
 
 const Report = () => {
   const { user } = useAuth();
@@ -165,7 +165,7 @@ const Report = () => {
               >
                 <FieldGroup>
                   <div id="location">
-                    <Card className="h-120 ring-0 dark:bg-slate-800 backdrop-filter backdrop-blur-sm border dark:border-slate-700 rounded-md transition-all shadow-sm">
+                    <Card className="h-160 sm:h-140 ring-0 dark:bg-slate-800 backdrop-filter backdrop-blur-sm border dark:border-slate-700 rounded-md transition-all shadow-sm">
                       <CardHeader>
                         <CardTitle
                           className={cn(

@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { Loader2, Locate, MapPin, TriangleAlert, X } from "lucide-react";
+import { Loader2, MapPin, TriangleAlert, X } from "lucide-react";
 
+import { useUserLocation } from "@/hooks/useUserLocation";
+import { useMapLoadingState } from "@/hooks/useMapLoadingState";
 import socketService from "@/services/socketService";
 import type { Outage } from "@/types";
 import api from "@/services/api";
+
+import { toast } from "sonner";
 import { useTheme } from "../theme-provider";
-import { useUserLocation } from "@/hooks/useUserLocation";
-import { useMapLoadingState } from "@/hooks/useMapLoadingState";
 import { Button } from "@/components/ui/button";
 import Marker from "@/components/marker";
 import Popup from "@/components/popup";
-import { toast } from "sonner";
 
 // Default center of the supported service area
 const DEFAULT_CENTER: [number, number] = [38.766, 8.944];
@@ -33,32 +34,18 @@ const Map = ({ limit, offset, status }: MapProps) => {
   const userMarkerElementRef = useRef<HTMLDivElement>(null);
 
   const setPositionsRef = useRef(setPositions);
-  const hasFlownRef = useRef(false);
 
   const { isMapLoading, setIsMapLoading } = useMapLoadingState();
   const [makeDraggable, setMakeDraggable] = useState(false);
-  const [isBannerVisible, setIsBannerVisible] = useState(isOutOfBounds);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   const [outages, setOutages] = useState<Outage[]>([]);
   const [activeMarker, setActiveMarker] = useState<Outage>();
-
-  // Handle Use default location button
-  const handleUseDefaultLocation = () => {
-    setPositions({ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] });
-    setMakeDraggable(false);
-    setIsBannerVisible(false);
-  };
-
-  // Handle Update location button
-  const handleUpdateLocation = () => {
-    setMakeDraggable(true);
-    setIsBannerVisible(false);
-  };
 
   useEffect(() => {
     setPositionsRef.current = setPositions;
   }, [setPositions]);
 
+  // Initialize the map only once (or when the theme changes)
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -70,7 +57,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
         positions?.lng || DEFAULT_CENTER[0],
         positions?.lat || DEFAULT_CENTER[1],
       ],
-      zoom: 9,
+      zoom: 12,
       style:
         theme === "dark"
           ? "mapbox://styles/mapbox/dark-v11"
@@ -103,6 +90,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
 
     // custom marker element
     const element = document.createElement("div");
+    element.style.visibility = isOutOfBounds ? "hidden" : "visible";
     element.style.width = "32px";
     element.style.height = "32px";
     element.style.color = "#4268ff";
@@ -110,6 +98,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
     element.innerHTML = `<svg title="Your location" viewBox="-4 0 32 32" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path fill="currentColor" transform="translate(-106, -413)" d="M118,422 C116.343,422 115,423.343 115,425 C115,426.657 116.343,428 118,428 C119.657,428 121,426.657 121,425 C121,423.343 119.657,422 118,422 L118,422 Z M118,430 C115.239,430 113,427.762 113,425 C113,422.238 115.239,420 118,420 C120.761,420 123,422.238 123,425 C123,427.762 120.761,430 118,430 L118,430 Z M118,413 C111.373,413 106,418.373 106,425 C106,430.018 116.005,445.011 118,445 C119.964,445.011 130,429.95 130,425 C130,418.373 124.627,413 118,413 L118,413 Z"/></svg>`;
     userMarkerElementRef.current = element;
 
+    // Popup for user location marker
     const locationPopup = new mapboxgl.Popup({
       offset: 25,
       closeButton: false,
@@ -119,7 +108,10 @@ const Map = ({ limit, offset, status }: MapProps) => {
       draggable: false,
       element,
     })
-      .setLngLat(DEFAULT_CENTER)
+      .setLngLat([
+        positions?.lng || DEFAULT_CENTER[0],
+        positions?.lat || DEFAULT_CENTER[1],
+      ])
       .addTo(map)
       .setPopup(locationPopup);
     markerRef.current = marker;
@@ -127,30 +119,37 @@ const Map = ({ limit, offset, status }: MapProps) => {
     marker.on("dragend", () => {
       const lngLat = marker.getLngLat();
       setPositionsRef.current({ lng: lngLat.lng, lat: lngLat.lat });
+      map.flyTo({
+        center: [lngLat.lng, lngLat.lat],
+        zoom: 15,
+        speed: 1.2,
+        curve: 1.42,
+        essential: true,
+      });
       setMakeDraggable(false);
       marker.setDraggable(false);
       toast.success("Location updated successfully");
     });
 
     //____________ close popup when clicking on map, during dragstart, during load, resize and during zoom _________________
-    const cloasePopup = () => setActiveMarker(undefined);
-    map.on("click", cloasePopup);
-    map.on("dragstart", cloasePopup);
-    map.on("load", cloasePopup);
-    map.on("resize", cloasePopup);
-    map.on("zoom", cloasePopup);
+    const closePopup = () => setActiveMarker(undefined);
+    map.on("click", closePopup);
+    map.on("dragstart", closePopup);
+    map.on("load", closePopup);
+    map.on("resize", closePopup);
+    map.on("zoom", closePopup);
     // ___________________________________________
 
     // Cleaning up the map
     return () => {
-      hasFlownRef.current = false;
       map.remove();
       mapRef.current = null;
       markerRef.current = null;
       userMarkerElementRef.current = null;
       setMapInstance(null);
     };
-  }, [theme, setIsMapLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme]); // Only rebuild the whole map when the theme changes
 
   // change color of the marker based on makeDraggable state
   useEffect(() => {
@@ -160,32 +159,21 @@ const Map = ({ limit, offset, status }: MapProps) => {
       : "#4268ff";
   }, [makeDraggable]);
 
-  // Determine effective center: use default if out of bounds, else user position
-  const effectiveCenter: [number, number] = isOutOfBounds
-    ? DEFAULT_CENTER
-    : [
-        positions?.lng || DEFAULT_CENTER[0],
-        positions?.lat || DEFAULT_CENTER[1],
-      ];
-
-  //  fly to user location
+  // Sync marker when user location or out-of-bounds status changes
   useEffect(() => {
     if (!markerRef.current || !mapRef.current) return;
 
-    markerRef.current.setLngLat(effectiveCenter);
-
-    // Fly only on first real location fix, not on every drag
-    if (!hasFlownRef.current && positions) {
-      hasFlownRef.current = true;
-      mapRef.current.flyTo({
-        center: effectiveCenter,
-        zoom: 12,
-        speed: 1.2,
-        curve: 1.42,
-        essential: true,
-      });
+    if (isOutOfBounds) {
+      // Hide the marker - user is outside the service area
+      markerRef.current.getElement().style.visibility = "hidden";
+    } else if (positions) {
+      markerRef.current.getElement().style.visibility = "visible";
+      markerRef.current.setLngLat([
+        positions.lng || DEFAULT_CENTER[0],
+        positions.lat || DEFAULT_CENTER[1],
+      ]);
     }
-  }, [effectiveCenter, positions]);
+  }, [positions, isOutOfBounds]);
 
   //  control  marker draggable state
   useEffect(() => {
@@ -193,6 +181,25 @@ const Map = ({ limit, offset, status }: MapProps) => {
 
     markerRef.current?.setDraggable(makeDraggable);
   }, [makeDraggable]);
+
+  // Handle Use default location button
+  const handleUseDefaultLocation = () => {
+    if (!mapRef.current) return;
+    setPositions({ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] });
+    setMakeDraggable(false);
+    mapRef.current.flyTo({
+      center: [DEFAULT_CENTER[0], DEFAULT_CENTER[1]],
+      zoom: 15,
+      speed: 1.2,
+      curve: 1.42,
+      essential: true,
+    });
+  };
+
+  // Handle Update location button
+  const handleUpdateLocation = () => {
+    setMakeDraggable(true);
+  };
 
   const handleMarkerClick = (outage: Outage) => {
     setActiveMarker(outage);
@@ -270,7 +277,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
           <div className="mt-12 mr-2.5">
             {!makeDraggable && (
               <Button
-                disabled={makeDraggable}
+                disabled={makeDraggable || isOutOfBounds}
                 onClick={handleUpdateLocation}
                 size="icon"
                 title="change location"
@@ -315,7 +322,7 @@ const Map = ({ limit, offset, status }: MapProps) => {
           ))}
       </div>
       {/* Out-of-bounds warning banner */}
-      {isBannerVisible && (
+      {isOutOfBounds && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
           <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-950/80 backdrop-blur-md px-4 py-3 shadow-lg text-amber-200">
             <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
@@ -324,8 +331,8 @@ const Map = ({ limit, offset, status }: MapProps) => {
                 Location outside service area
               </p>
               <p className="text-xs mt-0.5 text-amber-200/80">
-                Your GPS location is outside the supported Addis Ababa region.
-                The map is showing the default service area center.
+                Your GPS location is outside the supported Area. The map is
+                showing the default service area center.
               </p>
               <div className="sm:flex-row flex-col flex justify-end w-full gap-2">
                 <Button
@@ -334,13 +341,6 @@ const Map = ({ limit, offset, status }: MapProps) => {
                 >
                   <MapPin />
                   Use Default Location
-                </Button>
-                <Button
-                  onClick={handleUpdateLocation}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-400 px-3 py-1 text-xs font-semibold text-amber-950 hover:bg-amber-300 transition-colors"
-                >
-                  <Locate />
-                  Update Your Location
                 </Button>
               </div>
             </div>
@@ -358,18 +358,6 @@ const Map = ({ limit, offset, status }: MapProps) => {
           </div>
         </div>
       )}
-      {/* {!isMapLoading &&
-        mapInstance &&
-        outages &&
-        outages.map((outage) => (
-          <Marker
-            key={outage.id}
-            data={outage}
-            map={mapInstance}
-            isActive={activeMarker?.id === outage.id}
-            onClick={handleMarkerClick}
-          />
-        ))} */}
       {mapInstance && <Popup activeMarker={activeMarker} map={mapInstance} />}
     </>
   );

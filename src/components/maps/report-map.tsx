@@ -1,9 +1,14 @@
 import { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin, TriangleAlert } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+import { useUserLocation } from "@/hooks/useUserLocation";
+
 import { useTheme } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
+
+const DEFAULT_CENTER: [number, number] = [38.766, 8.944];
 
 const ReportMap = ({
   field,
@@ -14,6 +19,7 @@ const ReportMap = ({
   onChange: (value: { longitude: number; latitude: number }) => void;
 }) => {
   const { theme } = useTheme();
+  const { positions, isOutOfBounds, setPositions } = useUserLocation();
 
   const mapRef = useRef<mapboxgl.Map>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -31,8 +37,8 @@ const ReportMap = ({
     if (!mapContainerRef.current) return;
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-    const initialLng = field.state.value.longitude || 9;
-    const initialLat = field.state.value.latitude || 38;
+    const initialLng = field.state.value.longitude || DEFAULT_CENTER[0];
+    const initialLat = field.state.value.latitude || DEFAULT_CENTER[1];
 
     const map = (mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
@@ -58,7 +64,7 @@ const ReportMap = ({
     map.once("idle", () => {
       map.flyTo({
         center: [initialLng, initialLat],
-        zoom: 12,
+        zoom: 15,
         speed: 1.2,
         curve: 1.42,
         essential: true,
@@ -83,7 +89,10 @@ const ReportMap = ({
     }).setText(`Your location`);
     // Adding draggable marker to the user's location
     const marker = new mapboxgl.Marker({ draggable: true, element })
-      .setLngLat([initialLng, initialLat])
+      .setLngLat([
+        positions?.lng || DEFAULT_CENTER[0],
+        positions?.lat || DEFAULT_CENTER[1],
+      ])
       .setPopup(locationPopup)
       .addTo(map);
 
@@ -95,6 +104,13 @@ const ReportMap = ({
       onChangeRef.current({
         longitude: lngLat.lng,
         latitude: lngLat.lat,
+      });
+      map.flyTo({
+        center: [lngLat.lng, lngLat.lat],
+        zoom: 15,
+        speed: 1.2,
+        curve: 1.42,
+        essential: true,
       });
     });
 
@@ -115,9 +131,37 @@ const ReportMap = ({
     }
   }, [field.state.value.longitude, field.state.value.latitude]);
 
+  const handleUseDefaultLocation = () => {
+    setPositions({ lat: DEFAULT_CENTER[1], lng: DEFAULT_CENTER[0] });
+  };
   return (
     <div className="relative h-full w-full">
       <div ref={mapContainerRef} className="h-full w-full rounded-lg" />
+      {isOutOfBounds && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-950/80 backdrop-blur-md px-4 py-3 shadow-lg text-amber-200">
+            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-300">
+                Location outside service area
+              </p>
+              <p className="text-xs mt-0.5 text-amber-200/80">
+                Your GPS location is outside the supported Area. The map is
+                showing the default service area center.
+              </p>
+              <div className="sm:flex-row flex-col flex justify-end w-full gap-2">
+                <Button
+                  onClick={handleUseDefaultLocation}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-400 px-3 py-1 text-xs font-semibold text-amber-950 hover:bg-amber-300 transition-colors"
+                >
+                  <MapPin />
+                  Use Default Location
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {isMapLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
           <div className="flex flex-col items-center gap-2">
